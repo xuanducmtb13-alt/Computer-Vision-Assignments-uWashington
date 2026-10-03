@@ -2,6 +2,7 @@ import sys, os
 from ctypes import *
 import math
 import random
+import platform
 
 def c_array(ctype, values):
     arr = (ctype*len(values))()
@@ -14,10 +15,14 @@ class IMAGE(Structure):
                 ("c", c_int),
                 ("data", POINTER(c_float))]
 
-
-#lib = CDLL("/home/pjreddie/documents/455/libuwimg.so", RTLD_GLOBAL)
-#lib = CDLL("libuwimg.so", RTLD_GLOBAL)
-lib = CDLL(os.path.join(os.path.dirname(__file__), "libuwimg.so"), RTLD_GLOBAL)
+lib_dir = os.path.dirname(__file__)
+if platform.system() == "Windows" or os.name == "nt":
+    lib_path = os.path.join(lib_dir, "libuwimg.dll")
+    if not os.path.exists(lib_path):
+        lib_path = os.path.join(lib_dir, "libuwimg.so")
+    lib = CDLL(lib_path)
+else:
+    lib = CDLL(os.path.join(lib_dir, "libuwimg.so"), RTLD_GLOBAL)
 
 make_image = lib.make_image
 make_image.argtypes = [c_int, c_int, c_int]

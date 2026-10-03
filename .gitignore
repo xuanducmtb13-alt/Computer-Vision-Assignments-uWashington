@@ -6,3 +6,9 @@
 .fuse*
 libuwimg*
 uwimg
+uwimg.exe
+*.pdb
+*.lib
+*.exp
+*.dll
+

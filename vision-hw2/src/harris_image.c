@@ -84,32 +84,16 @@ void mark_corners(image im, descriptor *d, int n)
 image make_1d_gaussian(float sigma)
 {
     // TODO: optional, make separable 1d Gaussian.
-    int f = ceil(sigma*6);
-    f = f%2?f:(f+1);
-    int *temp = calloc(f, sizeof(int)), last = 1;
-    int *pascal = calloc(f, sizeof(int)), sum;
-    temp[0] = 1;
-    temp[1] = 1;
-    pascal[0] = 1;
-    for(int s=1; s<(f-1); ++s){
-        pascal[s+1] = temp[last];
-        sum = 2;
-        for(int i=1; i<=s; ++i){
-            pascal[i] = temp[i-1] + temp[i];
-            sum += pascal[i];
-        }
-        memcpy(temp, pascal, 4*(s+2));
-        last = s+1;
+    int f = ceil(sigma * 6);
+    if (f % 2 == 0) f++;
+    image filter = make_image(f, 1, 1);
+    int center = f / 2;
+    for (int i = 0; i < f; ++i) {
+        float x = (float)(i - center);
+        float val = expf(-(x * x) / (2.0f * sigma * sigma));
+        set_pixel(filter, i, 0, 0, val);
     }
-    free(temp);
-    image filter = make_image(1, f, 1);
-    printf("\n");
-    for(int i=0; i<f; ++i){
-        *(filter.data + i) = pascal[i]/(float)sum;
-        printf("%f, ", *(filter.data + i));
-    }
-    printf("\n");
-    free(pascal);
+    l1_normalize(filter);
     return filter;
 }
 
@@ -119,23 +103,27 @@ image make_1d_gaussian(float sigma)
 // returns: smoothed image.
 image smooth_image(image im, float sigma)
 {
-    // if(1){
-    //     image g = make_gaussian_filter(sigma);
-    //     image s = convolve_image(im, g, 1);
-    //     free_image(g);
-    //     return s;
-    // }
-    // else {
+    if(1){
+        image g = make_gaussian_filter(sigma);
+        image s = convolve_image(im, g, 1);
+        free_image(g);
+        return s;
+    }
+    else {
         // TODO: optional, use two convolutions with 1d gaussian filter.
         // If you implement, disable the above if check.
-    image filter = make_1d_gaussian(sigma);
-    image mid = convolve_image(im, filter, 1);
-    filter.w = filter.h;
-    filter.h = 1;
-    image filtered_image = convolve_image(mid, filter, 1);
-    free_image(mid);
-    free_image(filter);
-    return filtered_image;
+        image filter = make_1d_gaussian(sigma);
+        image mid = convolve_image(im, filter, 1);
+        image vert = make_image(1, filter.w, 1);
+        for(int i = 0; i < filter.w; ++i){
+            set_pixel(vert, 0, i, 0, get_pixel(filter, i, 0, 0));
+        }
+        image filtered_image = convolve_image(mid, vert, 1);
+        free_image(mid);
+        free_image(vert);
+        free_image(filter);
+        return filtered_image;
+    }
 }
 // Calculate the structure matrix of an image.
 // image im: the input image.

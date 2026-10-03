@@ -2,8 +2,16 @@ import sys, os
 from ctypes import *
 import math
 import random
+import platform
 
-lib = CDLL(os.path.join(os.path.dirname(__file__), "libuwimg.so"), RTLD_GLOBAL)
+lib_dir = os.path.dirname(__file__)
+if platform.system() == "Windows" or os.name == "nt":
+    lib_path = os.path.join(lib_dir, "libuwimg.dll")
+    if not os.path.exists(lib_path):
+        lib_path = os.path.join(lib_dir, "libuwimg.so")
+    lib = CDLL(lib_path)
+else:
+    lib = CDLL(os.path.join(lib_dir, "libuwimg.so"), RTLD_GLOBAL)
 
 def c_array(ctype, values):
     arr = (ctype*len(values))()
